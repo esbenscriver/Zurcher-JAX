@@ -1,5 +1,5 @@
 [![CI](https://github.com/esbenscriver/Zurcher-JAX/actions/workflows/ci.yml/badge.svg)](https://github.com/esbenscriver/Zurcher-JAX/actions/workflows/ci.yml)
-[![CD](https://github.com/esbenscriver/Zurcher-JAXworkflows/cd.yml/badge.svg)](https://github.com/esbenscriver/Zurcher-JAX/actions/workflows/cd.yml)
+[![CD](https://github.com/esbenscriver/Zurcher-JAX/actions/workflows/cd.yml/badge.svg)](https://github.com/esbenscriver/Zurcher-JAX/actions/workflows/cd.yml)
 
 # Zurcher-JAX
 This package implements, in JAX, a modified version of the nested fixed-point (NFXP) algorithm for the empirical model of Optimal Replacement of GMC bus engines for Harold Zurcher, originally introduced by [Rust (1987)](https://doi.org/10.2307/1911259). The algorithm has been modified in the following ways:  
