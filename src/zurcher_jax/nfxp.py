@@ -29,7 +29,7 @@ class EndogenousVariables(Pytree, mutable=False):
     log_q: Array
 
 @dataclass
-class Zurcher(Pytree, mutable=False):
+class zurcher(Pytree, mutable=False):
     """Optimal Replacement of GMC Bus Engines: An Empirical Model of Harold Zurcher
 
     Attributes:

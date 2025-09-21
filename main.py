@@ -41,7 +41,7 @@ transition_prob = transition_prob.at[0, :, 1].set(1.0)
 print(f"transition prob. when no replacement:\n{transition_prob[..., 0]}")
 print(f"transition prob. when replacement:\n{transition_prob[..., 1]}")
 
-model = nfxp.Zurcher(
+model = nfxp.zurcher(
     covariates=covariates,
     transition_prob=transition_prob,
 )

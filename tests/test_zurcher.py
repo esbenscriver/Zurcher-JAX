@@ -35,7 +35,7 @@ def test_integration():
     transition_prob = transition_prob.at[1:, :, 1].set(0.0)
     transition_prob = transition_prob.at[0, :, 1].set(1.0)
 
-    model = nfxp.Zurcher(
+    model = nfxp.zurcher(
         covariates=covariates,
         transition_prob=transition_prob,
     )
