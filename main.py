@@ -4,23 +4,19 @@ from jax import random
 
 from zurcher_jax import nfxp
 
+from tabulate import tabulate
+
 jax.config.update("jax_enable_x64", True)
 
 # Set dimension of models
-L, H, T = 2, 4, 4
-
-# Set standard deviation of normal distribution used when drawing structural errors
-std_error = 0.0
-
-# Set discount factor
-discount_factor = 0.95
+L, H = 2, 4
 
 # Set linear structural parameters
 utility_money = 1.0
 utility_work = -0.5
 
 # Set vector of linear structural parameters
-theta = jnp.asarray([utility_money, utility_work]).copy()
+parameter_values = jnp.asarray([utility_money, utility_work]).copy()
 
 # Set string
 parameter_names = ["Utility of money", "Utility of work"]
@@ -56,16 +52,30 @@ model = nfxp.Zurcher(
     transition_prob=transition_prob,
 )
 
-utility = model.Utility(theta)
+utility = model.Utility(parameter_values)
 
 solution = model.solve_and_store(utility)
 
-theta_guess = jnp.zeros_like(theta)
+parameters_guess = jnp.zeros_like(parameter_values)
 
-observed_choices = jnp.exp(solution.log_q)
+choice_probabilities = jnp.exp(solution.log_q)
 
-theta_estimates = model.fit(theta_guess, observed_choices)
-print(f"{theta = }")
-print(f"{theta_estimates = }")
+observations_per_state = 1_000
+
+observed_choices = random.multinomial(random.PRNGKey(123), observations_per_state, p=choice_probabilities)
+print(f"choice probabilities:\n{choice_probabilities}")
+print(f"observed choices:\n{observed_choices}")
+print(f"total number of observations: {observed_choices.sum()}")
+
+parameter_estimates = model.fit(parameters_guess, observed_choices)
+
+# print tables of true and estimated parameters
+print(
+    tabulate(
+        list(zip(parameter_values, parameter_estimates)), 
+        headers=["True parameters", "Estimated parameters"], 
+        tablefmt="grid",
+    )
+)
 
 
