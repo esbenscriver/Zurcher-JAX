@@ -26,12 +26,13 @@ SolverTypes = (
 @dataclass
 class EndogenousVariables(Pytree, mutable=False):
     """Class containing the endogenous variables of the model
-    
+
     Attributes:
         EV (Array): Expected value function
         v (Array): value function
         log_q (Array): the logarithm of the choice probabilities
     """
+
     EV: Array
     v: Array
     log_q: Array
@@ -103,7 +104,7 @@ class zurcher(Pytree, mutable=False):
 
     def log_choice_probabilities(self, v: Array, EV: Array) -> Array:
         """Compute the logarithm of the choice probabilities
-        
+
         Args:
             v (Array): Value function
             EV (Array): Expected value function
@@ -115,7 +116,7 @@ class zurcher(Pytree, mutable=False):
 
     def choice_probabilities(self, log_p: Array) -> Array:
         """Computes the choice probabilities from the logarithm of the choice probabilities
-        
+
         Args:
             log_p (Array): logarithm of the choice probabilities
 
