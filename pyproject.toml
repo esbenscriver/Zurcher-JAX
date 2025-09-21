@@ -1,7 +1,7 @@
 [project]
 name = "Zurcher-JAX"
 version = "0.1.0"
-description = "Implementation of a nested-fixed point algorithm for solving and estimating the Harold Zurcher optimal replacement model by John Rust"
+description = "Implementation of a nested-fixed point algorithm for the empirical model of Optimal Replacement of GMC bus engines for Harold Zurcher by John Rust"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
