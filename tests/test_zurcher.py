@@ -1,76 +1,62 @@
-# import JAX
 import jax
 import jax.numpy as jnp
-from jax import random
 
-# import solver for one-to-one matching model
-from estimate_matching_model.matching_model import MatchingModel, ObservedData
+from zurcher_jax import nfxp
 
-import pytest
-
-# Increase precision to 64 bit
 jax.config.update("jax_enable_x64", True)
 
+def test_integration():
+    # Set dimension of models
+    L, H = 2, 4
 
-@pytest.mark.parametrize(
-    "types_X, types_Y, number_of_parameters_X, number_of_parameters_Y",
-    [
-        (4, 6, 2, 3),
-        (100, 200, 20, 30),
-    ],
-)
-def test_mle(types_X, types_Y, number_of_parameters_X, number_of_parameters_Y):
-    # Simulate choice-specific utilities
-    covariates_X = -random.uniform(
-        key=random.PRNGKey(111), shape=(types_X, types_Y, number_of_parameters_X)
-    )
-    covariates_Y = random.uniform(
-        key=random.PRNGKey(112), shape=(types_X, types_Y, number_of_parameters_Y)
-    )
+    # Set linear structural parameters
+    utility_money = 1.0
+    utility_work = -0.5
 
-    # Simulate choice-specific utilities
-    parameters = random.uniform(
-        key=random.PRNGKey(113),
-        shape=(number_of_parameters_X + number_of_parameters_Y,),
-    )
+    # Set vector of linear structural parameters
+    theta = jnp.asarray([utility_money, utility_work]).copy()
 
-    # Simulate distribution of agents
-    marginal_distribution_X = random.uniform(
-        key=random.PRNGKey(115), shape=(types_X, 1)
-    )
-    marginal_distribution_Y = random.uniform(
-        key=random.PRNGKey(116), shape=(1, types_Y)
-    )
+    # Set parameters describing the income process
+    benefit, wageBase, wageGrowth = 0.1, 1.0, 1.0 / (H - 1.0)
 
-    model = MatchingModel(
-        covariates_X=covariates_X,
-        covariates_Y=covariates_Y,
-        marginal_distribution_X=marginal_distribution_X,
-        marginal_distribution_Y=marginal_distribution_Y,
-    )
+    # Set dimensions of arrays containing income and transition probabilities
+    income = jnp.empty((H, L))
+    work = jnp.ones((H, L)) * jnp.arange(L)[None,:]
 
-    utility_X, utility_Y = model.Utilities_of_agents(params=parameters)
+    covariates = jnp.empty((H, L, 2))
 
-    transfer = model.solve(utility_X=utility_X, utility_Y=utility_Y, verbose=False)
+    # Set income process
+    income = income.at[:, 0].set(benefit)
+    income = income.at[:, 1].set(wageBase * ((1.0 + wageGrowth) ** jnp.arange(H)))
 
-    pX_xy, pX_x0 = model.ChoiceProbabilities_X(transfer, utility_X)
-    pY_xy, pY_0y = model.ChoiceProbabilities_Y(transfer, utility_Y)
+    covariates = covariates.at[..., 0].set(income)
+    covariates = covariates.at[..., 1].set(work)
 
-    data = ObservedData(
-        transfer=transfer,
-        matched=model.marginal_distribution_X * pX_xy,
-        unmatched_X=model.marginal_distribution_X * pX_x0,
-        unmatched_Y=model.marginal_distribution_Y * pY_0y,
+    transition_prob = jnp.empty((H, H, L))
+
+    # Set transition probabilities when not working
+    transition_prob = transition_prob.at[..., 0].set(jnp.eye(H, k=-1))
+    transition_prob = transition_prob.at[0, 0, 0].set(1.0)
+
+    # Set transition probabilities when working
+    transition_prob = transition_prob.at[..., 1].set(jnp.eye(H, k=1))
+    transition_prob = transition_prob.at[-1, -1, 1].set(1.0)
+
+    model = nfxp.Zurcher(
+        covariates=covariates,
+        transition_prob=transition_prob,
     )
 
-    assert jnp.allclose(data.matched, model.marginal_distribution_Y * pY_xy), (
-        "demand do not match"
-    )
+    utility = model.Utility(theta)
 
-    guess = jnp.zeros_like(parameters)
+    solution = model.solve_and_store(utility)
 
-    parameter_estimates = model.fit(guess, data, verbose=False)
+    theta_guess = jnp.zeros_like(theta)
 
-    assert jnp.allclose(parameter_estimates, parameters), (
-        f"true parameters and estimated parameters do no match:\n{parameter_estimates = }\n{parameters = }"
-    )
+    observed_choices = jnp.exp(solution.log_q)
+
+    theta_estimates = model.fit(theta_guess, observed_choices)
+
+    assert jnp.allclose(theta, theta_estimates), f"Error: {jnp.allclose(theta, theta_estimates) = }"
+
+
