@@ -25,6 +25,13 @@ SolverTypes = (
 
 @dataclass
 class EndogenousVariables(Pytree, mutable=False):
+    """Class containing the endogenous variables of the model
+    
+    Attributes:
+        EV (Array): Expected value function
+        v (Array): value function
+        log_q (Array): the logarithm of the choice probabilities
+    """
     EV: Array
     v: Array
     log_q: Array
@@ -83,8 +90,8 @@ class zurcher(Pytree, mutable=False):
         """Solve the Bellman equation
 
         Args:
-            utility (Array): instantanous choice-specific utility
             EV_old (Array): old guess for the expected value function
+            utility (Array): instantanous choice-specific utilities
 
         Returns:
             EV_new (Array): new guess for the expected value function
@@ -95,9 +102,26 @@ class zurcher(Pytree, mutable=False):
         return EV_new
 
     def log_choice_probabilities(self, v: Array, EV: Array) -> Array:
+        """Compute the logarithm of the choice probabilities
+        
+        Args:
+            v (Array): Value function
+            EV (Array): Expected value function
+
+        Returns:
+            logarithm of the choice probabilities (Array)
+        """
         return v - jnp.expand_dims(EV, axis=-1)
 
     def choice_probabilities(self, log_p: Array) -> Array:
+        """Computes the choice probabilities from the logarithm of the choice probabilities
+        
+        Args:
+            log_p (Array): logarithm of the choice probabilities
+
+        Returns:
+            choice probabilities (Array)
+        """
         return jnp.exp(log_p)
 
     def solve(

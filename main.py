@@ -30,11 +30,11 @@ covariates = covariates.at[..., 1].set(replace)
 
 transition_prob = jnp.empty((M, M, D))
 
-# Set transition probabilities when no replacement
+# Set transition probabilities if no replacement
 transition_prob = transition_prob.at[..., 0].set(jnp.eye(M, k=1))
 transition_prob = transition_prob.at[-1, -1, 0].set(1.0)
 
-# Set transition probabilities when replacement
+# Set transition probabilities if replacement
 transition_prob = transition_prob.at[1:, :, 1].set(0.0)
 transition_prob = transition_prob.at[0, :, 1].set(1.0)
 
