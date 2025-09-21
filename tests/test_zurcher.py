@@ -5,20 +5,21 @@ from zurcher_jax import nfxp
 
 jax.config.update("jax_enable_x64", True)
 
+
 def test_integration():
     # Set dimension of models
     M, D = 10, 2
 
     # Set structural parameters
-    operating_costs= -0.05
+    operating_costs = -0.05
     replacement_costs = -1.0
 
     # Set vector of structural parameters
     parameter_values = jnp.asarray([operating_costs, replacement_costs]).copy()
 
     # Set dimensions of arrays containing income and transition probabilities
-    mileage = jnp.ones((M, D)) * jnp.arange(M)[:,None]
-    replace = jnp.ones((M, D)) * jnp.arange(D)[None,:]
+    mileage = jnp.ones((M, D)) * jnp.arange(M)[:, None]
+    replace = jnp.ones((M, D)) * jnp.arange(D)[None, :]
 
     covariates = jnp.empty((M, D, 2))
 
@@ -50,6 +51,6 @@ def test_integration():
 
     parameter_estimates = model.fit(parameter_guess, observed_choices)
 
-    assert jnp.allclose(parameter_values, parameter_estimates), f"Error: {jnp.allclose(parameter_values, parameter_estimates) = }"
-
-
+    assert jnp.allclose(parameter_values, parameter_estimates), (
+        f"Error: {jnp.allclose(parameter_values, parameter_estimates) = }"
+    )

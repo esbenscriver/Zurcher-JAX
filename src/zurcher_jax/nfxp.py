@@ -22,11 +22,13 @@ SolverTypes = (
     type[SquaremAcceleration] | type[AndersonAcceleration] | type[FixedPointIteration]
 )
 
+
 @dataclass
 class EndogenousVariables(Pytree, mutable=False):
     EV: Array
     v: Array
     log_q: Array
+
 
 @dataclass
 class zurcher(Pytree, mutable=False):
@@ -43,7 +45,7 @@ class zurcher(Pytree, mutable=False):
     transition_prob: Array
     discount_factor: float = 0.95
     axis: int = -1
-    
+
     def Utility(self, parameters: Array) -> Array:
         """Computes choice-specific utilities
 
@@ -58,7 +60,7 @@ class zurcher(Pytree, mutable=False):
         #   i: current milage level
         #   k: parameters of utility function
         return jnp.einsum("iak, k -> ia", self.covariates, parameters)
-    
+
     def Expectations(self, EV: Array) -> Array:
         """Compute choice-specific expectations of value function
 
@@ -73,10 +75,10 @@ class zurcher(Pytree, mutable=False):
         #   i: current milage level
         #   j: next period milage level
         return jnp.einsum("ija, j -> ia", self.transition_prob, EV)
-    
+
     def ValueFunction(self, utility: Array, EV: Array) -> Array:
         return utility + self.discount_factor * EV
-    
+
     def ExpectedValue(self, EV_old: Array, utility: Array) -> Array:
         """Solve the Bellman equation
 
@@ -91,10 +93,10 @@ class zurcher(Pytree, mutable=False):
         v = self.ValueFunction(utility, EV_next)
         EV_new = logsumexp(v, axis=self.axis)
         return EV_new
-    
+
     def log_choice_probabilities(self, v: Array, EV: Array) -> Array:
         return v - jnp.expand_dims(EV, axis=-1)
-    
+
     def choice_probabilities(self, log_p: Array) -> Array:
         return jnp.exp(log_p)
 
@@ -109,7 +111,7 @@ class zurcher(Pytree, mutable=False):
         """Inner loop of the NFXP algorithm that solves EV
 
         Args:
-            utility (Array): choice-specific utilities 
+            utility (Array): choice-specific utilities
             fixed_point_solver (SolverTypes): solver used for solving fixed point equation (FixedPointIteration, AndersonAcceleration, SquaremAcceleration)
             tol (float): stopping tolerance for step length of fixed-point iterations, x_{i+1} - x_{i}
             maxiter (int): maximum number of iterations
@@ -129,7 +131,7 @@ class zurcher(Pytree, mutable=False):
             verbose=verbose,
         ).run(EV_init, utility)
         return result.params
-    
+
     def solve_and_store(self, utility: Array) -> EndogenousVariables:
         EV = self.solve(utility)
         EV_next = self.Expectations(EV)
@@ -152,7 +154,9 @@ class zurcher(Pytree, mutable=False):
         endo = self.solve_and_store(utility)
 
         number_of_observations = jnp.sum(observed_choices)
-        neg_log_lik = -jnp.nansum(observed_choices * endo.log_q) / number_of_observations
+        neg_log_lik = (
+            -jnp.nansum(observed_choices * endo.log_q) / number_of_observations
+        )
         return neg_log_lik
 
     def fit(

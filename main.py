@@ -12,7 +12,7 @@ jax.config.update("jax_enable_x64", True)
 M, D = 10, 2
 
 # Set structural parameters
-operating_costs= -0.05
+operating_costs = -0.05
 replacement_costs = -1.0
 
 # Set vector of structural parameters
@@ -20,8 +20,8 @@ parameter_values = jnp.asarray([operating_costs, replacement_costs]).copy()
 parameter_names = ["Operating cost", "Replacement costs"]
 
 # Set dimensions of arrays containing income and transition probabilities
-mileage = jnp.ones((M, D)) * jnp.arange(M)[:,None]
-replace = jnp.ones((M, D)) * jnp.arange(D)[None,:]
+mileage = jnp.ones((M, D)) * jnp.arange(M)[:, None]
+replace = jnp.ones((M, D)) * jnp.arange(D)[None, :]
 
 covariates = jnp.empty((M, D, 2))
 
@@ -53,8 +53,8 @@ choice_probabilities = jnp.exp(solution.log_q)
 
 observations_per_state = 1_000
 observed_choices = random.multinomial(
-    random.PRNGKey(123), 
-    observations_per_state, 
+    random.PRNGKey(123),
+    observations_per_state,
     p=choice_probabilities,
 )
 
@@ -64,11 +64,9 @@ parameter_estimates = model.fit(parameters_guess, observed_choices)
 # print tables of true and estimated parameters
 print(
     tabulate(
-        list(zip(parameter_names, parameter_values, parameter_estimates)), 
+        list(zip(parameter_names, parameter_values, parameter_estimates)),
         headers=["True parameters", "Estimated parameters"],
         tablefmt="grid",
     )
 )
 print(f"Number of observations: {observed_choices.sum()}")
-
-
