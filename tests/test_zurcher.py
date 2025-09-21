@@ -7,56 +7,49 @@ jax.config.update("jax_enable_x64", True)
 
 def test_integration():
     # Set dimension of models
-    L, H = 2, 4
+    M, D = 10, 2
 
-    # Set linear structural parameters
-    utility_money = 1.0
-    utility_work = -0.5
+    # Set structural parameters
+    operating_costs= -0.05
+    replacement_costs = -1.0
 
-    # Set vector of linear structural parameters
-    theta = jnp.asarray([utility_money, utility_work]).copy()
-
-    # Set parameters describing the income process
-    benefit, wageBase, wageGrowth = 0.1, 1.0, 1.0 / (H - 1.0)
+    # Set vector of structural parameters
+    parameter_values = jnp.asarray([operating_costs, replacement_costs]).copy()
 
     # Set dimensions of arrays containing income and transition probabilities
-    income = jnp.empty((H, L))
-    work = jnp.ones((H, L)) * jnp.arange(L)[None,:]
+    mileage = jnp.ones((M, D)) * jnp.arange(M)[:,None]
+    replace = jnp.ones((M, D)) * jnp.arange(D)[None,:]
 
-    covariates = jnp.empty((H, L, 2))
+    covariates = jnp.empty((M, D, 2))
 
-    # Set income process
-    income = income.at[:, 0].set(benefit)
-    income = income.at[:, 1].set(wageBase * ((1.0 + wageGrowth) ** jnp.arange(H)))
+    covariates = covariates.at[..., 0].set(mileage)
+    covariates = covariates.at[..., 1].set(replace)
 
-    covariates = covariates.at[..., 0].set(income)
-    covariates = covariates.at[..., 1].set(work)
+    transition_prob = jnp.empty((M, M, D))
 
-    transition_prob = jnp.empty((H, H, L))
+    # Set transition probabilities when no replacement
+    transition_prob = transition_prob.at[..., 0].set(jnp.eye(M, k=1))
+    transition_prob = transition_prob.at[-1, -1, 0].set(1.0)
 
-    # Set transition probabilities when not working
-    transition_prob = transition_prob.at[..., 0].set(jnp.eye(H, k=-1))
-    transition_prob = transition_prob.at[0, 0, 0].set(1.0)
-
-    # Set transition probabilities when working
-    transition_prob = transition_prob.at[..., 1].set(jnp.eye(H, k=1))
-    transition_prob = transition_prob.at[-1, -1, 1].set(1.0)
+    # Set transition probabilities when replacement
+    transition_prob = transition_prob.at[1:, :, 1].set(0.0)
+    transition_prob = transition_prob.at[0, :, 1].set(1.0)
 
     model = nfxp.Zurcher(
         covariates=covariates,
         transition_prob=transition_prob,
     )
 
-    utility = model.Utility(theta)
+    utility = model.Utility(parameter_values)
 
     solution = model.solve_and_store(utility)
 
-    theta_guess = jnp.zeros_like(theta)
+    parameter_guess = jnp.zeros_like(parameter_values)
 
     observed_choices = jnp.exp(solution.log_q)
 
-    theta_estimates = model.fit(theta_guess, observed_choices)
+    parameter_estimates = model.fit(parameter_guess, observed_choices)
 
-    assert jnp.allclose(theta, theta_estimates), f"Error: {jnp.allclose(theta, theta_estimates) = }"
+    assert jnp.allclose(parameter_values, parameter_estimates), f"Error: {jnp.allclose(parameter_values, parameter_estimates) = }"
 
 
