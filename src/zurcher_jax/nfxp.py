@@ -1,7 +1,7 @@
 """
-Nested fixed-point (NFXP) algorithm for the empirical model of Optimal Replacement of GMC Bus Engines. For simplicity this version implemented with the following changes relatively to the original proposed version
-    - the Newton-Kantorivich iteration method of the inner loop is replaced with the SQUAREM accelerator method
-    - the BHHH method of the outer loop is replaced with LBFGS method
+This package implements, in JAX, a modified version of the nested fixed-point (NFXP) algorithm for the empirical model of Optimal Replacement of GMC bus engines for Harold Zurcher. The algorithm has been modified in the following ways:
+    - The Newton–Kantorovich iteration method in the inner loop is replaced with the SQUAREM acceleration method.
+    - The BHHH method in the outer loop is replaced with the LBFGS method.
 
 Reference:
 Rust, John. “Optimal Replacement of GMC Bus Engines: An Empirical Model of Harold Zurcher.” Econometrica 55, no. 5 (1987): 999–1033. https://doi.org/10.2307/1911259.
@@ -85,6 +85,15 @@ class zurcher(Pytree, mutable=False):
         return jnp.einsum("ija, j -> ia", self.transition_prob, EV)
 
     def ValueFunction(self, utility: Array, EV: Array) -> Array:
+        """Compute value function
+
+        Args:
+            utility (Array): choice-specific utilities
+            EV (Array): expected value function
+
+        Returns:
+            v (Array): choice-specific value function
+        """
         return utility + self.discount_factor * EV
 
     def ExpectedValue(self, EV_old: Array, utility: Array) -> Array:
@@ -113,17 +122,6 @@ class zurcher(Pytree, mutable=False):
             logarithm of the choice probabilities (Array)
         """
         return v - jnp.expand_dims(EV, axis=-1)
-
-    def choice_probabilities(self, log_p: Array) -> Array:
-        """Computes the choice probabilities from the logarithm of the choice probabilities
-
-        Args:
-            log_p (Array): logarithm of the choice probabilities
-
-        Returns:
-            choice probabilities (Array)
-        """
-        return jnp.exp(log_p)
 
     def solve(
         self,
