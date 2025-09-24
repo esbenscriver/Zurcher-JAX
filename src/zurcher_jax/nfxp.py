@@ -156,6 +156,14 @@ class zurcher(Pytree, mutable=False):
         return result.params
 
     def solve_and_store(self, utility: Array) -> EndogenousVariables:
+        """Solve model and store endogenous variables
+
+        Args:
+            utility (Array): choice-specific utilities
+
+        Returns:
+            endo (EndogenousVariables): endogenous variables of the model
+        """
         EV = self.solve(utility)
         EV_next = self.Expectations(EV)
         v = self.ValueFunction(utility, EV_next)
